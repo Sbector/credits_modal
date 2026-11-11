@@ -13,10 +13,11 @@ const filler = Array.from({ length: 5 }, (_, i) => i + 1);
   </head>
   <body>
     <main>
-      <h1>demo · badge de créditos</h1>
+      <h1>demo · bloque de créditos</h1>
       <p>
-        Badge fijo en la esquina inferior derecha. Ábrelo y pruébalo: teclado
-        (tab, esc), hover sobre el nombre y ventana reducida para simular móvil.
+        Bloque “créditos” al final de la página (derecha), en el flujo normal.
+        Ábrelo y pruébalo: teclado (tab, esc), hover sobre el nombre y ventana
+        reducida para simular móvil.
       </p>
       <h2>instalación</h2>
       <pre><code>{`---
@@ -25,17 +26,18 @@ import CreditsBadge from './components/credits/CreditsBadge.astro';
 <CreditsBadge />`}</code></pre>
       <h2>notas</h2>
       <p>
-        Edita <code>src/config/credits.ts</code> para cambiar nombre, URL y
-        textos por defecto.
+        Edita <code>src/config/credits.ts</code> para cambiar nombre, URL,
+        label y autor por defecto.
       </p>
       {filler.map((n) => (
-        <p>{`relleno ${n} — texto de prueba para hacer scroll y verificar que el badge se mantiene fijo.`}</p>
+        <p>{`relleno ${n} — texto de prueba para hacer scroll y verificar que el bloque aparece al final del contenido.`}</p>
       ))}
     </main>
+    <footer class="demo-footer">
+      <CreditsBadge />
+    </footer>
   </body>
 </html>
-
-<CreditsBadge />
 
 <style is:global>
   body {
@@ -48,7 +50,13 @@ import CreditsBadge from './components/credits/CreditsBadge.astro';
   main {
     max-width: 640px;
     margin: 0 auto;
-    padding: 3rem 1.5rem 6rem;
+    padding: 3rem 1.5rem 3rem;
+  }
+
+  .demo-footer {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 0 1.5rem 2rem;
   }
 
   h1,

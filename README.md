@@ -1,28 +1,34 @@
 # credits_modal
 
-Badge de créditos estilo keygen (CRT monocromo) para sitios Astro. Sin frameworks de runtime, sin dependencias en el componente.
+Bloque de créditos estilo keygen (CRT monocromo) para sitios Astro. Sin frameworks de runtime, sin dependencias en el componente.
 
 ## Uso
+
+Colócalo al final de la página (flujo normal, alineado a la derecha):
 
 ```astro
 ---
 import CreditsBadge from './components/credits/CreditsBadge.astro';
 ---
-<CreditsBadge />
+<footer>
+  <CreditsBadge />
+</footer>
 ```
 
 Por defecto lee `src/config/credits.ts`:
 
 ```ts
 export const CREDITS = {
-  name: 'TU NOMBRE',
+  name: 'sbector.com',
   href: 'https://tu-sitio.com',
-  label: 'sitio elaborado por',
-  role: 'diseño y desarrollo',
+  label: 'desarrollado por',
+  author: 'NOMBRE2',
 };
 ```
 
-Props disponibles (todas opcionales): `name`, `href`, `label`, `role`, `position` (`bottom-right` | `bottom-left` | `top-right` | `top-left`).
+El modal muestra: `CRÉDITOS`, el label, el nombre grande (enlace a `href`) y `UNA CREACIÓN DE <author>`. Si `author` está vacío, la línea se omite.
+
+Props opcionales: `name`, `href`, `label`, `author`, `trigger` (texto del bloque, por defecto “créditos”).
 
 ## Desarrollo
 

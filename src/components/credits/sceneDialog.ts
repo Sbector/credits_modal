@@ -14,8 +14,7 @@ export interface PixelPalette {
 export interface DialogContent {
   label: string;
   name: string;
-  role: string;
-  year: string;
+  author: string;
   hint: string;
 }
 
@@ -26,11 +25,11 @@ export interface Rect {
   h: number;
 }
 
-const W = 176;
-const H = 120;
-const PANEL: Rect = { x: 8, y: 28, w: 160, h: 34 };
-const CLOSE: Rect = { x: 159, y: 0, w: 16, h: 14 };
-const CLOSE_X = { x: 164, y: 3 };
+const W = 168;
+const H = 100;
+const PANEL: Rect = { x: 8, y: 26, w: 152, h: 32 };
+const CLOSE: Rect = { x: 151, y: 0, w: 16, h: 14 };
+const CLOSE_X = { x: 156, y: 3 };
 const SCRAMBLE_MS = 900;
 const FRAME_MS = 33;
 const SCRAMBLE = '!<>-_\\/[]{}=+*^?#·:01';
@@ -48,7 +47,8 @@ export class SceneDialog {
   private palette: PixelPalette;
   private label: string;
   private name: string;
-  private meta: string;
+  private creation: string;
+  private creationLines: string[] = [];
   private hint: string;
   private title = 'CRÉDITOS';
   private lines: string[] = [];
@@ -68,7 +68,11 @@ export class SceneDialog {
     this.palette = palette;
     this.label = content.label.toUpperCase();
     this.name = content.name.toUpperCase();
-    this.meta = `${content.role.toUpperCase()} · ${content.year}`;
+    const author = content.author.trim();
+    this.creation = author ? `UNA CREACIÓN DE ${author.toUpperCase()}` : '';
+    this.creationLines = this.creation
+      ? wrapText(this.creation, W - 16, 1).slice(0, 2)
+      : [];
     this.hint = content.hint.toUpperCase();
     this.layoutName();
     this.buildDecor();
@@ -220,11 +224,15 @@ export class SceneDialog {
       ctx.fillRect(cursorX, cursorY, 2 * this.nameSize, 7 * this.nameSize);
     }
 
-    const metaWidth = textWidth(this.meta, 1);
-    drawText(ctx, this.meta, Math.floor((W - metaWidth) / 2), 70, p.mid, 1);
+    let creationY = 65;
+    for (const line of this.creationLines) {
+      const lineW = textWidth(line, 1);
+      drawText(ctx, line, Math.floor((W - lineW) / 2), creationY, p.mid, 1);
+      creationY += 8;
+    }
 
     const hintWidth = textWidth(this.hint, 1);
-    drawText(ctx, this.hint, Math.floor((W - hintWidth) / 2), H - 14, p.dim, 1);
+    drawText(ctx, this.hint, Math.floor((W - hintWidth) / 2), H - 12, p.dim, 1);
 
     if (glitch > 0) {
       for (let slice = 0; slice < 2; slice += 1) {

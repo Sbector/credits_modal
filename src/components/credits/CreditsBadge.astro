@@ -5,33 +5,29 @@ interface Props {
   name?: string;
   href?: string;
   label?: string;
-  role?: string;
-  position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+  author?: string;
+  trigger?: string;
 }
 
 const {
   name = CREDITS.name,
   href = CREDITS.href,
   label = CREDITS.label,
-  role = CREDITS.role,
-  position = 'bottom-right',
+  author = CREDITS.author,
+  trigger = 'créditos',
 } = Astro.props;
 
 const uid = `credits-${Math.random().toString(36).slice(2, 9)}`;
-const year = new Date().getFullYear();
 ---
 
-<div class:list={['credits-root', `credits-root--${position}`]} data-credits>
+<div class="credits-root" data-credits>
   <button
     class="credits-badge"
     type="button"
     aria-haspopup="dialog"
     aria-controls={uid}
     data-credits-open
-  >
-    <span class="credits-badge__dot" aria-hidden="true"></span>
-    <span class="credits-badge__text">{label}</span>
-  </button>
+  >{trigger}</button>
 
   <dialog
     id={uid}
@@ -39,8 +35,7 @@ const year = new Date().getFullYear();
     aria-labelledby={`${uid}-title`}
     data-credits-dialog
     data-credits-label={label}
-    data-credits-role={role}
-    data-credits-year={String(year)}
+    data-credits-author={author}
   >
     <div class="credits-dialog__stage" data-credits-stage>
       <h2 class="credits-sr" id={`${uid}-title`}>Créditos del sitio</h2>
@@ -59,7 +54,7 @@ const year = new Date().getFullYear();
   </dialog>
 
   <noscript>
-    <p class="credits-noscript">{label} <a href={href}>{name}</a></p>
+    <p class="credits-noscript"><a href={href}>{trigger}</a></p>
   </noscript>
 </div>
 
@@ -72,66 +67,37 @@ const year = new Date().getFullYear();
     --credits-bright: #e7e8e8;
     --credits-mid: #a7aaad;
     --credits-dim: #555a5e;
-    --credits-overlay: #111315;
 
+    display: block;
+    text-align: right;
+    padding: 1rem 0;
     font-family: ui-monospace, 'Cascadia Mono', Consolas, 'Courier New', monospace;
   }
 
   .credits-badge {
-    position: fixed;
-    z-index: 60;
-    right: 1rem;
-    bottom: 1rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.55rem 0.75rem;
+    display: inline-block;
+    padding: 0.25rem 0;
     font: inherit;
     font-size: 11px;
     font-weight: 600;
     line-height: 1;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--credits-mid);
-    background: var(--credits-surface);
-    border: 1px solid var(--credits-border);
-    border-radius: 2px;
+    background: none;
+    border: 0;
     cursor: pointer;
-    animation: credits-flicker 7s linear infinite;
+    transition: color 0.18s ease;
   }
-
-  .credits-root--bottom-left .credits-badge { right: auto; left: 1rem; }
-  .credits-root--top-right .credits-badge { right: 1rem; bottom: auto; top: 1rem; }
-  .credits-root--top-left .credits-badge { right: auto; bottom: auto; top: 1rem; left: 1rem; }
 
   .credits-badge:hover,
   .credits-badge:focus-visible {
     color: var(--credits-fg);
-    border-color: var(--credits-dim);
   }
 
   .credits-badge:focus-visible {
-    outline: 1px solid var(--credits-mid);
-    outline-offset: 2px;
-  }
-
-  .credits-badge__dot {
-    width: 6px;
-    height: 6px;
-    background: var(--credits-fg);
-    box-shadow: 0 0 6px var(--credits-fg);
-    animation: credits-blink 2.4s steps(1) infinite;
-  }
-
-  @keyframes credits-blink {
-    0%, 60% { opacity: 1; }
-    61%, 100% { opacity: 0.15; }
-  }
-
-  @keyframes credits-flicker {
-    0%, 91%, 94%, 100% { opacity: 1; }
-    92% { opacity: 0.55; }
-    96% { opacity: 0.8; }
+    outline: 1px solid var(--credits-fg);
+    outline-offset: 3px;
   }
 
   .credits-dialog {
@@ -191,31 +157,21 @@ const year = new Date().getFullYear();
   }
 
   .credits-noscript {
-    position: fixed;
-    z-index: 60;
-    left: 1rem;
-    bottom: 1rem;
     margin: 0;
-    padding: 0.55rem 0.75rem;
     font-size: 11px;
     font-weight: 600;
     line-height: 1;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--credits-mid);
-    background: var(--credits-surface);
-    border: 1px solid var(--credits-border);
-    border-radius: 2px;
   }
 
   .credits-noscript a {
-    color: var(--credits-fg);
+    color: var(--credits-mid);
     text-decoration: underline;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .credits-badge,
-    .credits-badge__dot,
     .credits-dialog[open] {
       animation: none;
     }
@@ -251,12 +207,11 @@ const year = new Date().getFullYear();
       dim: read('--credits-dim', '#555a5e'),
     };
 
-    const surface = createSurface(canvas, 176, 120);
+    const surface = createSurface(canvas, 168, 100);
     const scene = new SceneDialog(surface, palette, {
-      label: dialog.dataset.creditsLabel ?? 'sitio elaborado por',
+      label: dialog.dataset.creditsLabel ?? 'desarrollado por',
       name,
-      role: dialog.dataset.creditsRole ?? '',
-      year: dialog.dataset.creditsYear ?? String(new Date().getFullYear()),
+      author: dialog.dataset.creditsAuthor ?? '',
       hint: 'esc o clic fuera cierra',
     });
 
