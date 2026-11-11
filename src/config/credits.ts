@@ -1,8 +1,8 @@
 export const CREDITS = {
   name: 'sbector.com',
-  href: 'https://tu-sitio.com',
+  href: 'https://sbector.com',
   label: 'desarrollado por',
-  author: 'NOMBRE2',
+  author: 'Lino Vite',
 } as const;
 
 export type Credits = typeof CREDITS;

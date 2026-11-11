@@ -15,7 +15,6 @@ export interface DialogContent {
   label: string;
   name: string;
   author: string;
-  hint: string;
 }
 
 export interface Rect {
@@ -25,11 +24,9 @@ export interface Rect {
   h: number;
 }
 
-const W = 168;
-const H = 100;
-const PANEL: Rect = { x: 8, y: 26, w: 152, h: 32 };
-const CLOSE: Rect = { x: 151, y: 0, w: 16, h: 14 };
-const CLOSE_X = { x: 156, y: 3 };
+const W = 160;
+const TOP = 16;
+const CLOSE: Rect = { x: 143, y: 0, w: 16, h: 14 };
 const SCRAMBLE_MS = 900;
 const FRAME_MS = 33;
 const SCRAMBLE = '!<>-_\\/[]{}=+*^?#·:01';
@@ -43,14 +40,17 @@ function frameRect(ctx: CanvasRenderingContext2D, rect: Rect, color: string): vo
 }
 
 export class SceneDialog {
-  private surface: Surface;
+  readonly width = W;
+  height = 0;
+
+  private surface: Surface | null = null;
   private palette: PixelPalette;
   private label: string;
   private name: string;
-  private creation: string;
-  private creationLines: string[] = [];
-  private hint: string;
-  private title = 'CRÉDITOS';
+  private authorLines: string[] = [];
+  private authorSize = 2;
+  private labelY = 0;
+  private panel: Rect = { x: 8, y: 0, w: W - 16, h: 0 };
   private lines: string[] = [];
   private nameSize = 2;
   private total = 0;
@@ -63,24 +63,29 @@ export class SceneDialog {
   private dither: CanvasPattern | null = null;
   private vignette: CanvasGradient | null = null;
 
-  constructor(surface: Surface, palette: PixelPalette, content: DialogContent) {
-    this.surface = surface;
+  constructor(palette: PixelPalette, content: DialogContent) {
     this.palette = palette;
     this.label = content.label.toUpperCase();
     this.name = content.name.toUpperCase();
-    const author = content.author.trim();
-    this.creation = author ? `UNA CREACIÓN DE ${author.toUpperCase()}` : '';
-    this.creationLines = this.creation
-      ? wrapText(this.creation, W - 16, 1).slice(0, 2)
-      : [];
-    this.hint = content.hint.toUpperCase();
-    this.layoutName();
+    const author = content.author.trim().toUpperCase();
+    if (author) {
+      this.authorSize = textWidth(author, 2) <= W - 16 ? 2 : 1;
+      this.authorLines =
+        this.authorSize === 1 && textWidth(author, 1) > W - 16
+          ? wrapText(author, W - 16, 1).slice(0, 2)
+          : [author];
+    }
+    this.computeLayout();
+  }
+
+  attach(surface: Surface): void {
+    this.surface = surface;
     this.buildDecor();
   }
 
   getHitRects(): { link: Rect; close: Rect } {
     return {
-      link: { x: PANEL.x, y: PANEL.y, w: PANEL.w, h: PANEL.h },
+      link: { x: this.panel.x, y: this.panel.y, w: this.panel.w, h: this.panel.h },
       close: { x: CLOSE.x, y: CLOSE.y, w: CLOSE.w, h: CLOSE.h },
     };
   }
@@ -119,25 +124,39 @@ export class SceneDialog {
     this.render(false, 0);
   }
 
-  private layoutName(): void {
-    const maxWidth = PANEL.w - 4;
-    for (const size of [2, 1]) {
-      const lines = wrapText(this.name, maxWidth, size);
-      const maxLines = size === 2 ? 2 : 3;
-      if (lines.length <= maxLines) {
-        this.lines = lines;
-        this.nameSize = size;
-        this.total = lines.reduce((sum, line) => sum + Array.from(line).length, 0);
-        return;
-      }
+  private computeLayout(): void {
+    const nameMax = W - 20;
+    let size = 2;
+    let lines = wrapText(this.name, nameMax, size);
+    if (lines.length > 2) {
+      size = 1;
+      lines = wrapText(this.name, nameMax, size);
+      if (lines.length > 3) lines = lines.slice(0, 3);
     }
-    this.lines = wrapText(this.name, maxWidth, 1).slice(0, 3);
-    this.nameSize = 1;
-    this.total = this.lines.reduce((sum, line) => sum + Array.from(line).length, 0);
+    this.nameSize = size;
+    this.lines = lines;
+    this.total = lines.reduce((sum, line) => sum + Array.from(line).length, 0);
+
+    const nameBlock = lines.length * 8 * size - 2;
+    const authorY = TOP + 8;
+    if (this.authorLines.length > 0) {
+      this.labelY = authorY + this.authorLines.length * 8 * this.authorSize + 2;
+    } else {
+      this.labelY = TOP - 2;
+    }
+    this.panel = {
+      x: 8,
+      y: this.labelY + 9,
+      w: W - 16,
+      h: nameBlock + 6,
+    };
+    this.height = this.panel.y + this.panel.h + 6;
   }
 
   private buildDecor(): void {
-    const ctx = this.surface.off;
+    const surface = this.surface;
+    if (!surface) return;
+    const ctx = surface.off;
 
     const tile = document.createElement('canvas');
     tile.width = 2;
@@ -153,45 +172,66 @@ export class SceneDialog {
       this.dither = ctx.createPattern(tile, 'repeat');
     }
 
-    const gradient = ctx.createRadialGradient(W / 2, H * 0.45, 20, W / 2, H * 0.55, W * 0.75);
+    const gradient = ctx.createRadialGradient(
+      W / 2,
+      this.height * 0.45,
+      20,
+      W / 2,
+      this.height * 0.55,
+      W * 0.75,
+    );
     gradient.addColorStop(0, 'rgba(17, 19, 21, 0)');
     gradient.addColorStop(1, 'rgba(17, 19, 21, 0.55)');
     this.vignette = gradient;
   }
 
   private render(cursor: boolean, glitch: number): void {
-    const ctx = this.surface.off;
+    const surface = this.surface;
+    if (!surface) return;
+    const ctx = surface.off;
     const p = this.palette;
+    const h = this.height;
 
     ctx.globalAlpha = 1;
     ctx.fillStyle = p.bg;
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillRect(0, 0, W, h);
     if (this.dither) {
       ctx.fillStyle = this.dither;
-      ctx.fillRect(0, 0, W, H);
+      ctx.fillRect(0, 0, W, h);
     }
 
     ctx.fillStyle = p.surface;
     ctx.fillRect(1, 1, W - 2, 11);
-    drawText(ctx, this.title, 6, 3, p.mid, 1);
-
-    drawText(ctx, 'X', CLOSE_X.x, CLOSE_X.y, this.focusTarget === 'close' ? p.fg : p.dim, 1);
+    drawText(ctx, 'CRÉDITOS', 6, 3, p.mid, 1);
+    drawText(ctx, 'X', CLOSE.x + 5, 3, this.focusTarget === 'close' ? p.fg : p.dim, 1);
 
     ctx.fillStyle = p.border;
     ctx.fillRect(1, 12, W - 2, 1);
-
     if (this.focusTarget === 'close') frameRect(ctx, CLOSE, p.bright);
 
-    const labelWidth = textWidth(this.label, 1);
-    drawText(ctx, this.label, Math.floor((W - labelWidth) / 2), 19, p.dim, 1);
+    let authorY = TOP + 8;
+    if (this.authorLines.length > 0) {
+      const prefix = 'UNA CREACIÓN DE';
+      const prefixW = textWidth(prefix, 1);
+      drawText(ctx, prefix, Math.floor((W - prefixW) / 2), TOP, p.dim, 1);
+      for (const line of this.authorLines) {
+        const lineW = textWidth(line, this.authorSize);
+        drawText(ctx, line, Math.floor((W - lineW) / 2), authorY, p.mid, this.authorSize);
+        authorY += 8 * this.authorSize;
+      }
+    }
 
+    const labelW = textWidth(this.label, 1);
+    drawText(ctx, this.label, Math.floor((W - labelW) / 2), this.labelY, p.dim, 1);
+
+    const panel = this.panel;
     ctx.fillStyle = p.bg;
-    ctx.fillRect(PANEL.x, PANEL.y, PANEL.w, PANEL.h);
-    frameRect(ctx, PANEL, this.focusTarget === 'link' ? p.bright : p.border);
+    ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
+    frameRect(ctx, panel, this.focusTarget === 'link' ? p.bright : p.border);
 
     const lineHeight = 8 * this.nameSize;
     const blockHeight = this.lines.length * lineHeight - 2;
-    let y = PANEL.y + Math.floor((PANEL.h - blockHeight) / 2);
+    let y = panel.y + Math.floor((panel.h - blockHeight) / 2);
     let rendered = 0;
     let cursorX = 0;
     let cursorY = y;
@@ -200,7 +240,7 @@ export class SceneDialog {
       const glyphs = Array.from(line);
       const count = glyphs.length;
       const lineWidth = count * 6 * this.nameSize - this.nameSize;
-      const startX = PANEL.x + Math.floor((PANEL.w - lineWidth) / 2);
+      const startX = panel.x + Math.floor((panel.w - lineWidth) / 2);
       let x = startX;
 
       for (let i = 0; i < count; i += 1) {
@@ -219,24 +259,14 @@ export class SceneDialog {
       y += lineHeight;
     }
 
-    if (cursor && cursorX < PANEL.x + PANEL.w - 2 && Math.floor(this.frame / 15) % 2 === 0) {
+    if (cursor && cursorX < panel.x + panel.w - 2 && Math.floor(this.frame / 15) % 2 === 0) {
       ctx.fillStyle = p.mid;
       ctx.fillRect(cursorX, cursorY, 2 * this.nameSize, 7 * this.nameSize);
     }
 
-    let creationY = 65;
-    for (const line of this.creationLines) {
-      const lineW = textWidth(line, 1);
-      drawText(ctx, line, Math.floor((W - lineW) / 2), creationY, p.mid, 1);
-      creationY += 8;
-    }
-
-    const hintWidth = textWidth(this.hint, 1);
-    drawText(ctx, this.hint, Math.floor((W - hintWidth) / 2), H - 12, p.dim, 1);
-
     if (glitch > 0) {
       for (let slice = 0; slice < 2; slice += 1) {
-        const sy = 2 + Math.floor(Math.random() * (H - 4));
+        const sy = 2 + Math.floor(Math.random() * (h - 4));
         const sh = 1 + Math.floor(Math.random() * 3);
         const dx = Math.round((Math.random() * 2 - 1) * 4 * glitch);
         ctx.drawImage(ctx.canvas, 0, sy, W, sh, dx, sy, W, sh);
@@ -244,17 +274,17 @@ export class SceneDialog {
     }
 
     ctx.fillStyle = 'rgba(17, 19, 21, 0.3)';
-    for (let line = 0; line < H; line += 3) {
+    for (let line = 0; line < h; line += 3) {
       ctx.fillRect(0, line, W, 1);
     }
 
     if (this.vignette) {
       ctx.fillStyle = this.vignette;
-      ctx.fillRect(0, 0, W, H);
+      ctx.fillRect(0, 0, W, h);
     }
 
-    frameRect(ctx, { x: 0, y: 0, w: W, h: H }, p.border);
+    frameRect(ctx, { x: 0, y: 0, w: W, h }, p.border);
 
-    this.surface.present();
+    surface.present();
   }
 }

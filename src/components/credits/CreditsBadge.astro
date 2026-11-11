@@ -207,13 +207,13 @@ const uid = `credits-${Math.random().toString(36).slice(2, 9)}`;
       dim: read('--credits-dim', '#555a5e'),
     };
 
-    const surface = createSurface(canvas, 168, 100);
-    const scene = new SceneDialog(surface, palette, {
+    const scene = new SceneDialog(palette, {
       label: dialog.dataset.creditsLabel ?? 'desarrollado por',
       name,
       author: dialog.dataset.creditsAuthor ?? '',
-      hint: 'esc o clic fuera cierra',
     });
+    const surface = createSurface(canvas, scene.width, scene.height);
+    scene.attach(surface);
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     let raf = 0;
