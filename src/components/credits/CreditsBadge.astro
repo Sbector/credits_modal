@@ -1,0 +1,360 @@
+---
+import { CREDITS } from '../../config/credits';
+
+interface Props {
+  name?: string;
+  href?: string;
+  label?: string;
+  role?: string;
+  position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+}
+
+const {
+  name = CREDITS.name,
+  href = CREDITS.href,
+  label = CREDITS.label,
+  role = CREDITS.role,
+  position = 'bottom-right',
+} = Astro.props;
+
+const uid = `credits-${Math.random().toString(36).slice(2, 9)}`;
+const year = new Date().getFullYear();
+---
+
+<div class:list={['credits-root', `credits-root--${position}`]} data-credits>
+  <button
+    class="credits-badge"
+    type="button"
+    aria-haspopup="dialog"
+    aria-controls={uid}
+    data-credits-open
+  >
+    <span class="credits-badge__dot" aria-hidden="true"></span>
+    <span class="credits-badge__text">{label}</span>
+  </button>
+
+  <dialog
+    id={uid}
+    class="credits-dialog"
+    aria-labelledby={`${uid}-title`}
+    data-credits-dialog
+    data-credits-label={label}
+    data-credits-role={role}
+    data-credits-year={String(year)}
+  >
+    <div class="credits-dialog__stage" data-credits-stage>
+      <h2 class="credits-sr" id={`${uid}-title`}>Créditos del sitio</h2>
+      <canvas class="credits-dialog__canvas" data-credits-canvas aria-hidden="true"></canvas>
+      <button class="credits-dialog__hit" type="button" data-credits-close aria-label="Cerrar"></button>
+      <a
+        class="credits-dialog__hit"
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        data-credits-link
+        data-credits-text={name}
+        aria-label={`Visitar el sitio de ${name} (se abre en una pestaña nueva)`}
+      ></a>
+    </div>
+  </dialog>
+
+  <noscript>
+    <p class="credits-noscript">{label} <a href={href}>{name}</a></p>
+  </noscript>
+</div>
+
+<style>
+  .credits-root {
+    --credits-bg: #0b0d0f;
+    --credits-surface: #171a1d;
+    --credits-border: #222629;
+    --credits-fg: #f2f2f0;
+    --credits-bright: #e7e8e8;
+    --credits-mid: #a7aaad;
+    --credits-dim: #555a5e;
+    --credits-overlay: #111315;
+
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'Courier New', monospace;
+  }
+
+  .credits-badge {
+    position: fixed;
+    z-index: 60;
+    right: 1rem;
+    bottom: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.75rem;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--credits-mid);
+    background: var(--credits-surface);
+    border: 1px solid var(--credits-border);
+    border-radius: 2px;
+    cursor: pointer;
+    animation: credits-flicker 7s linear infinite;
+  }
+
+  .credits-root--bottom-left .credits-badge { right: auto; left: 1rem; }
+  .credits-root--top-right .credits-badge { right: 1rem; bottom: auto; top: 1rem; }
+  .credits-root--top-left .credits-badge { right: auto; bottom: auto; top: 1rem; left: 1rem; }
+
+  .credits-badge:hover,
+  .credits-badge:focus-visible {
+    color: var(--credits-fg);
+    border-color: var(--credits-dim);
+  }
+
+  .credits-badge:focus-visible {
+    outline: 1px solid var(--credits-mid);
+    outline-offset: 2px;
+  }
+
+  .credits-badge__dot {
+    width: 6px;
+    height: 6px;
+    background: var(--credits-fg);
+    box-shadow: 0 0 6px var(--credits-fg);
+    animation: credits-blink 2.4s steps(1) infinite;
+  }
+
+  @keyframes credits-blink {
+    0%, 60% { opacity: 1; }
+    61%, 100% { opacity: 0.15; }
+  }
+
+  @keyframes credits-flicker {
+    0%, 91%, 94%, 100% { opacity: 1; }
+    92% { opacity: 0.55; }
+    96% { opacity: 0.8; }
+  }
+
+  .credits-dialog {
+    width: max-content;
+    max-width: 92vw;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  }
+
+  .credits-dialog::backdrop {
+    background: rgba(11, 13, 15, 0.85);
+  }
+
+  .credits-dialog[open] {
+    animation: credits-pop 0.18s ease-out;
+  }
+
+  @keyframes credits-pop {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+
+  .credits-dialog__stage {
+    position: relative;
+  }
+
+  .credits-dialog__canvas {
+    display: block;
+    pointer-events: none;
+    image-rendering: pixelated;
+  }
+
+  .credits-dialog__hit {
+    position: absolute;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+  }
+
+  .credits-dialog__hit:focus-visible {
+    outline: none;
+  }
+
+  .credits-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .credits-noscript {
+    position: fixed;
+    z-index: 60;
+    left: 1rem;
+    bottom: 1rem;
+    margin: 0;
+    padding: 0.55rem 0.75rem;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--credits-mid);
+    background: var(--credits-surface);
+    border: 1px solid var(--credits-border);
+    border-radius: 2px;
+  }
+
+  .credits-noscript a {
+    color: var(--credits-fg);
+    text-decoration: underline;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .credits-badge,
+    .credits-badge__dot,
+    .credits-dialog[open] {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  import { createSurface } from './surface';
+  import { SceneDialog, type PixelPalette, type Rect } from './sceneDialog';
+
+  function init(root: HTMLElement): void {
+    const openBtn = root.querySelector<HTMLButtonElement>('[data-credits-open]');
+    const dialog = root.querySelector<HTMLDialogElement>('[data-credits-dialog]');
+    const closeBtn = root.querySelector<HTMLButtonElement>('[data-credits-close]');
+    const link = root.querySelector<HTMLAnchorElement>('[data-credits-link]');
+    const canvas = root.querySelector<HTMLCanvasElement>('[data-credits-canvas]');
+    if (!openBtn || !dialog || !closeBtn || !link || !canvas) return;
+
+    const name = (link.dataset.creditsText ?? '').trim();
+    if (!name) return;
+
+    const styles = getComputedStyle(root);
+    const read = (prop: string, fallback: string): string =>
+      styles.getPropertyValue(prop).trim() || fallback;
+
+    const palette: PixelPalette = {
+      bg: read('--credits-bg', '#0b0d0f'),
+      surface: read('--credits-surface', '#171a1d'),
+      border: read('--credits-border', '#222629'),
+      fg: read('--credits-fg', '#f2f2f0'),
+      bright: read('--credits-bright', '#e7e8e8'),
+      mid: read('--credits-mid', '#a7aaad'),
+      dim: read('--credits-dim', '#555a5e'),
+    };
+
+    const surface = createSurface(canvas, 176, 120);
+    const scene = new SceneDialog(surface, palette, {
+      label: dialog.dataset.creditsLabel ?? 'sitio elaborado por',
+      name,
+      role: dialog.dataset.creditsRole ?? '',
+      year: dialog.dataset.creditsYear ?? String(new Date().getFullYear()),
+      hint: 'esc o clic fuera cierra',
+    });
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let raf = 0;
+
+    const loop = (t: number): void => {
+      scene.tick(t);
+      raf = requestAnimationFrame(loop);
+    };
+
+    const run = (): void => {
+      cancelAnimationFrame(raf);
+      if (reduced.matches) {
+        scene.drawStatic();
+        return;
+      }
+      raf = requestAnimationFrame(loop);
+    };
+
+    const place = (el: HTMLElement, rect: Rect, scale: number): void => {
+      el.style.left = `${Math.round(rect.x * scale)}px`;
+      el.style.top = `${Math.round(rect.y * scale)}px`;
+      el.style.width = `${Math.round(rect.w * scale)}px`;
+      el.style.height = `${Math.round(rect.h * scale)}px`;
+    };
+
+    const fit = (): void => {
+      surface.fit(window.innerWidth * 0.92, window.innerHeight * 0.9, 4);
+      const rects = scene.getHitRects();
+      place(link, rects.link, surface.scale);
+      place(closeBtn, rects.close, surface.scale);
+    };
+
+    const scramble = (): void => {
+      if (reduced.matches) {
+        scene.drawStatic();
+        return;
+      }
+      scene.scramble();
+    };
+
+    openBtn.addEventListener('click', () => {
+      fit();
+      dialog.showModal();
+      scene.scramble();
+      run();
+      closeBtn.focus();
+    });
+
+    closeBtn.addEventListener('click', () => dialog.close());
+
+    dialog.addEventListener('click', (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+
+    dialog.addEventListener('close', () => {
+      cancelAnimationFrame(raf);
+      openBtn.focus();
+    });
+
+    link.addEventListener('pointerenter', () => {
+      scene.setFocus('link');
+      scramble();
+    });
+    link.addEventListener('pointerleave', () => {
+      scene.setFocus(null);
+      if (reduced.matches) scene.drawStatic();
+    });
+    link.addEventListener('focus', () => {
+      scene.setFocus('link');
+      scramble();
+    });
+    link.addEventListener('blur', () => {
+      scene.setFocus(null);
+      if (reduced.matches) scene.drawStatic();
+    });
+
+    closeBtn.addEventListener('focus', () => {
+      scene.setFocus('close');
+      if (reduced.matches) scene.drawStatic();
+    });
+    closeBtn.addEventListener('blur', () => {
+      scene.setFocus(null);
+      if (reduced.matches) scene.drawStatic();
+    });
+
+    window.addEventListener('resize', () => {
+      if (!dialog.open) return;
+      fit();
+      if (reduced.matches) scene.drawStatic();
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) cancelAnimationFrame(raf);
+      else if (dialog.open) run();
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-credits]').forEach(init);
+</script>

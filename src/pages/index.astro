@@ -1,0 +1,72 @@
+---
+import CreditsBadge from '../components/credits/CreditsBadge.astro';
+
+const filler = Array.from({ length: 5 }, (_, i) => i + 1);
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>credits badge · demo</title>
+  </head>
+  <body>
+    <main>
+      <h1>demo · badge de créditos</h1>
+      <p>
+        Badge fijo en la esquina inferior derecha. Ábrelo y pruébalo: teclado
+        (tab, esc), hover sobre el nombre y ventana reducida para simular móvil.
+      </p>
+      <h2>instalación</h2>
+      <pre><code>{`---
+import CreditsBadge from './components/credits/CreditsBadge.astro';
+---
+<CreditsBadge />`}</code></pre>
+      <h2>notas</h2>
+      <p>
+        Edita <code>src/config/credits.ts</code> para cambiar nombre, URL y
+        textos por defecto.
+      </p>
+      {filler.map((n) => (
+        <p>{`relleno ${n} — texto de prueba para hacer scroll y verificar que el badge se mantiene fijo.`}</p>
+      ))}
+    </main>
+  </body>
+</html>
+
+<CreditsBadge />
+
+<style is:global>
+  body {
+    margin: 0;
+    background: #0b0d0f;
+    color: #f2f2f0;
+    font-family: system-ui, sans-serif;
+  }
+
+  main {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 6rem;
+  }
+
+  h1,
+  h2 {
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  pre {
+    padding: 1rem;
+    overflow-x: auto;
+    background: #171a1d;
+    border: 1px solid #222629;
+  }
+
+  code {
+    font-family: ui-monospace, monospace;
+    font-size: 0.85rem;
+    color: #a7aaad;
+  }
+</style>
